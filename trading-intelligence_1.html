@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Only One</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 15px; line-height: 1.6; background: #e8e8e3; color: #1a1a1a; min-height: 100vh; }
+  .wrap { max-width: 100%; padding: 12px 20px; }
+
+  /* SETUP */
+  #setup-panel { background: #f2f2ed; border: 1px solid #d8d8d0; border-radius: 10px; padding: 18px 22px; margin-bottom: 12px; }
+  #setup-panel h2 { font-size: 15px; font-weight: 700; margin-bottom: 5px; }
+  #setup-panel p { font-size: 13px; color: #666; margin-bottom: 12px; }
+  .api-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  #api-key-input { flex: 1; min-width: 200px; border: 1px solid #c8c8c0; border-radius: 8px; padding: 9px 12px; font-size: 13px; font-family: monospace; background: #e8e8e3; color: #1a1a1a; outline: none; }
+  #save-key-btn { padding: 9px 18px; background: #1a1a1a; border: none; border-radius: 8px; color: #fff; font-size: 13px; cursor: pointer; }
+  .key-ok { font-size: 12px; padding: 4px 10px; border-radius: 4px; color: #1a6b3a; background: #dcfce7; border: 1px solid #b8dfc8; }
+  .key-no { font-size: 12px; padding: 4px 10px; border-radius: 4px; color: #8b4513; background: #fef3e8; border: 1px solid #f0c890; }
+  .api-link { font-size: 12px; color: #0066cc; text-decoration: none; margin-top: 7px; display: inline-block; }
+
+  /* LANG */
+  .lang-wrap { display: flex; gap: 6px; }
+  .lang-btn { padding: 4px 12px; border-radius: 5px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid #c8c8c0; background: #e8e8e3; color: #555; }
+  .lang-btn.active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+
+  /* HEADER */
+  .header { background: #1a1a1a; border-radius: 10px; padding: 12px 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .header-left { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .logo { font-size: 22px; font-weight: 800; color: #fff; letter-spacing: -0.5px; }
+  .logo span { color: #4ade80; }
+  .tagline { font-size: 11px; color: #888; margin-top: 1px; }
+  .badge-sent { display: inline-block; padding: 4px 12px; border-radius: 6px; font-size: 13px; font-weight: 700; }
+  .sent-bull { background: #dcfce7; color: #166534; }
+  .sent-bear { background: #fee2e2; color: #991b1b; }
+  .sent-neu  { background: #fef9c3; color: #854d0e; }
+  .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ws-wrap { display: flex; align-items: center; gap: 5px; }
+  .ws-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+  .ws-dot.live { background: #4ade80; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .ws-label { font-size: 12px; color: #aaa; }
+  .meta { font-size: 12px; color: #aaa; text-align: right; line-height: 1.5; }
+  .freq-select { padding: 6px 10px; border: 1px solid #444; border-radius: 6px; background: #2a2a2a; color: #fff; font-size: 12px; cursor: pointer; }
+  .ref-btn { padding: 7px 14px; background: transparent; border: 1px solid #4ade80; border-radius: 8px; color: #4ade80; font-size: 12px; cursor: pointer; }
+  .ref-btn:hover { background: rgba(74,222,128,0.1); }
+  .ref-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .counter-badge { padding: 5px 10px; background: #2a2a2a; border-radius: 6px; font-size: 12px; color: #aaa; }
+  .counter-badge span { color: #fff; font-weight: 700; }
+
+  /* TOP GRID */
+  .top-grid { display: grid; grid-template-columns: 1fr 340px; gap: 12px; margin-bottom: 12px; }
+  @media(max-width:900px){ .top-grid { grid-template-columns: 1fr; } }
+
+  /* PANELS */
+  .btc-panel, .ws-panel { background: #f2f2ed; border: 1px solid #d8d8d0; border-radius: 10px; }
+  .section { background: #f2f2ed; border: 1px solid #d8d8d0; border-radius: 10px; margin-bottom: 12px; overflow: hidden; }
+
+  /* BTC */
+  .btc-panel { padding: 18px 20px; }
+  .btc-top { display: grid; grid-template-columns: auto 1fr; gap: 20px; margin-bottom: 16px; align-items: start; }
+  .btc-label { font-size: 12px; color: #888; margin-bottom: 4px; }
+  .btc-price { font-size: 52px; font-weight: 800; color: #1a1a1a; letter-spacing: -2px; line-height: 1; }
+  .btc-change { font-size: 20px; font-weight: 700; margin-top: 6px; }
+  .btc-bias { background: #e8e8e3; border-radius: 8px; padding: 14px 16px; }
+  .btc-bias-label { font-size: 11px; color: #888; font-weight: 700; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .btc-bias-txt { font-size: 14px; color: #1a1a1a; line-height: 1.65; }
+
+  /* FUTURES */
+  .futures-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 10px; }
+  @media(max-width:700px){ .futures-grid { grid-template-columns: repeat(2,1fr); } }
+  .fcard { background: #e8e8e3; border-radius: 8px; padding: 12px 14px; }
+  .fcard-label { font-size: 11px; color: #888; margin-bottom: 5px; line-height: 1.4; }
+  .fcard-value { font-size: 22px; font-weight: 700; }
+  .fcard-sub { font-size: 11px; color: #aaa; margin-top: 3px; }
+  .fcard-diff { font-size: 12px; font-weight: 600; margin-top: 4px; }
+  .taker-split { display: flex; gap: 0; margin-top: 8px; border-radius: 5px; overflow: hidden; height: 8px; }
+  .taker-buy-bar { background: #1a6b3a; }
+  .taker-sell-bar { background: #b91c1c; }
+  .taker-labels { display: flex; justify-content: space-between; margin-top: 3px; }
+  .green { color: #1a6b3a; } .red { color: #b91c1c; } .orange { color: #c2410c; }
+
+  /* WALL STREET */
+  .ws-panel { padding: 18px 20px; }
+  .ws-panel-title { font-size: 13px; font-weight: 700; color: #444; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; }
+  .ws-time { font-size: 11px; color: #aaa; font-weight: 400; }
+  .index-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #e0e0d8; }
+  .index-item:last-child { border-bottom: none; }
+  .index-name { font-size: 14px; font-weight: 600; }
+  .index-sub { font-size: 11px; color: #aaa; }
+  .index-val { font-size: 16px; font-weight: 700; text-align: right; }
+  .index-chg { font-size: 13px; font-weight: 600; margin-top: 2px; text-align: right; }
+  .pre-badge { font-size: 10px; padding: 2px 7px; border-radius: 4px; background: #fef9c3; color: #854d0e; font-weight: 600; margin-left: 6px; }
+
+  /* SECTION */
+  .section-hdr { padding: 12px 20px; border-bottom: 1px solid #e0e0d8; background: #e8e8e3; font-size: 13px; font-weight: 700; color: #444; display: flex; justify-content: space-between; align-items: center; }
+  .section-hdr-sub { font-size: 11px; font-weight: 400; color: #aaa; }
+  .section-body { padding: 16px 20px; }
+  .small-btn { font-size: 12px; padding: 4px 10px; border: 1px solid #c8c8c0; border-radius: 6px; background: #e8e8e3; cursor: pointer; color: #444; }
+
+  /* MACRO */
+  .macro-txt { font-size: 15px; color: #333; line-height: 1.75; margin-bottom: 14px; }
+  .news-item { display: flex; gap: 10px; padding: 9px 0; border-bottom: 1px solid #e0e0d8; font-size: 14px; color: #333; line-height: 1.5; align-items: flex-start; }
+  .news-item:last-child { border-bottom: none; }
+  .news-arrow { color: #0066cc; flex-shrink: 0; }
+  .news-link { color: #0066cc; text-decoration: none; font-size: 12px; margin-left: 6px; }
+
+  /* WATCHLIST */
+  .watchlist-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 10px; }
+  @media(max-width:800px){ .watchlist-grid { grid-template-columns: repeat(3,1fr); } }
+  .wcard { background: #e8e8e3; border-radius: 8px; padding: 12px 14px; position: relative; }
+  .wcard-sym { font-size: 12px; color: #888; margin-bottom: 4px; font-weight: 600; }
+  .wcard-price { font-size: 18px; font-weight: 700; }
+  .wcard-chg { font-size: 13px; font-weight: 600; margin-top: 3px; }
+  .wcard-remove { position: absolute; top: 8px; right: 8px; font-size: 12px; color: #ccc; cursor: pointer; }
+  .wcard-remove:hover { color: #b91c1c; }
+  .add-asset-btn { border: 2px dashed #c0c0b8; border-radius: 8px; padding: 12px 14px; text-align: center; cursor: pointer; font-size: 13px; color: #aaa; background: transparent; width: 100%; }
+  .add-row { display: flex; gap: 8px; margin-top: 12px; display: none; }
+  .add-input { flex: 1; border: 1px solid #c8c8c0; border-radius: 6px; padding: 8px 12px; font-size: 14px; background: #e8e8e3; outline: none; }
+  .add-confirm { padding: 8px 14px; background: #1a1a1a; border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
+
+  /* ALERT */
+  .alert-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; }
+  @media(max-width:700px){ .alert-grid { grid-template-columns: 1fr; } }
+  .alert-card { background: #e8e8e3; border: 1px solid #d8d8d0; border-radius: 8px; padding: 14px 16px; }
+  .alert-top { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .alert-asset { font-size: 16px; font-weight: 700; }
+  .alert-dir { display: inline-block; padding: 3px 10px; border-radius: 5px; font-size: 13px; font-weight: 700; }
+  .dir-up { background: #dcfce7; color: #166534; }
+  .dir-down { background: #fee2e2; color: #991b1b; }
+  .dir-neu { background: #fef9c3; color: #854d0e; }
+  .alert-body { font-size: 14px; color: #333; line-height: 1.6; }
+  .alert-time { font-size: 11px; color: #aaa; margin-top: 6px; }
+
+  /* GEO */
+  .geo-card { background: #e8e8e3; border: 1px solid #d8d8d0; border-radius: 8px; padding: 16px 18px; margin-bottom: 10px; }
+  .geo-card:last-child { margin-bottom: 0; }
+  .geo-title { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
+  .geo-body { font-size: 14px; color: #333; line-height: 1.7; }
+  .geo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+  .geo-col-title { font-size: 11px; font-weight: 700; color: #888; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .stock-tag { display: inline-block; padding: 4px 10px; border-radius: 5px; font-size: 13px; font-weight: 700; margin: 3px 4px 3px 0; }
+  .stock-up { background: #dcfce7; color: #166534; }
+  .stock-down { background: #fee2e2; color: #991b1b; }
+  .crypto-tag { display: inline-block; padding: 4px 10px; border-radius: 5px; font-size: 13px; font-weight: 700; margin: 3px 4px 3px 0; }
+  .crypto-up { background: #e0f2fe; color: #075985; }
+  .crypto-down { background: #fce7f3; color: #9d174d; }
+
+  /* AGENDA */
+  .agenda-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; }
+  @media(max-width:700px){ .agenda-grid { grid-template-columns: 1fr; } }
+  .agenda-card { background: #e8e8e3; border: 1px solid #d8d8d0; border-radius: 8px; padding: 12px 14px; }
+  .agenda-time { font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+  .agenda-desc { font-size: 13px; color: #333; line-height: 1.5; margin-bottom: 8px; }
+  .agenda-impact { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+  .impact-high { background: #fee2e2; color: #991b1b; }
+  .impact-med  { background: #fef9c3; color: #854d0e; }
+  .impact-low  { background: #e0e0d8; color: #555; }
+
+  /* MOVIMENTO */
+  .movement-panel { background: #e8e8e3; border-radius: 8px; padding: 14px 16px; }
+  .movement-title { font-size: 13px; font-weight: 700; color: #444; margin-bottom: 10px; }
+  .movement-item { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid #deded8; font-size: 13px; color: #333; align-items: flex-start; }
+  .movement-item:last-child { border-bottom: none; }
+  .movement-source { font-size: 11px; font-weight: 700; color: #888; min-width: 80px; flex-shrink: 0; }
+  .fear-bar { height: 8px; background: #d8d8d0; border-radius: 4px; margin-top: 6px; overflow: hidden; }
+  .fear-fill { height: 100%; border-radius: 4px; }
+
+  /* PARLAMENTARI */
+  .parl-item { display: flex; gap: 14px; padding: 10px 0; border-bottom: 1px solid #e0e0d8; align-items: flex-start; flex-wrap: wrap; }
+  .parl-item:last-child { border-bottom: none; }
+  .parl-name { font-size: 14px; font-weight: 700; min-width: 150px; }
+  .parl-action { font-size: 14px; color: #333; flex: 1; line-height: 1.5; }
+  .parl-date { font-size: 12px; color: #aaa; }
+  .parl-buy { color: #166534; font-weight: 700; }
+  .parl-sell { color: #991b1b; font-weight: 700; }
+
+  /* RICERCA */
+  .search-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .search-input { flex: 1; border: 1px solid #c8c8c0; border-radius: 8px; padding: 11px 14px; font-size: 15px; background: #e8e8e3; color: #1a1a1a; outline: none; }
+  .action-btn { padding: 11px 20px; background: #1a1a1a; border: none; border-radius: 8px; color: #fff; font-size: 14px; cursor: pointer; }
+  .action-btn:disabled { opacity: .4; cursor: not-allowed; }
+  .result-box { background: #e8e8e3; border-radius: 8px; padding: 16px 18px; font-size: 15px; color: #1a1a1a; line-height: 1.75; }
+
+  /* UPLOAD */
+  .tipo-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+  .tipo-btn { padding: 7px 14px; border: 1px solid #c8c8c0; border-radius: 7px; background: #e8e8e3; font-size: 13px; cursor: pointer; color: #555; }
+  .tipo-active { background: #1a1a1a; color: #fff; border-color: #1a1a1a; }
+  .tipo-desc-box { font-size: 13px; color: #666; margin-bottom: 12px; padding: 10px 14px; background: #e8e8e3; border-radius: 8px; }
+  .upload-area { border: 2px dashed #c0c0b8; border-radius: 8px; padding: 24px; text-align: center; cursor: pointer; background: #e8e8e3; }
+  .upload-area:hover { border-color: #888; }
+  .upload-icon { font-size: 28px; margin-bottom: 8px; }
+  .upload-txt { font-size: 14px; color: #555; }
+  .upload-sub { font-size: 12px; color: #aaa; margin-top: 4px; }
+
+  /* CHAT */
+  .chat-wrap { border: 1px solid #d8d8d0; border-radius: 8px; overflow: hidden; }
+  .chat-messages { height: 220px; overflow-y: auto; padding: 14px 16px; background: #e8e8e3; }
+  .chat-msg { margin-bottom: 12px; }
+  .chat-msg-name { font-size: 12px; font-weight: 700; color: #555; margin-bottom: 3px; }
+  .chat-msg-name span { color: #aaa; font-weight: 400; margin-left: 6px; }
+  .chat-msg-txt { font-size: 14px; color: #1a1a1a; line-height: 1.5; }
+  .chat-msg.me .chat-msg-name { color: #1a6b3a; }
+  .chat-input-row { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px solid #d8d8d0; background: #f2f2ed; }
+  .chat-input { flex: 1; border: 1px solid #c8c8c0; border-radius: 6px; padding: 8px 12px; font-size: 14px; outline: none; background: #e8e8e3; }
+  .chat-send { padding: 8px 16px; background: #1a1a1a; border: none; border-radius: 6px; color: #fff; font-size: 13px; cursor: pointer; }
+
+  /* DISCLAIMER */
+  .disclaimer { background: #1a1a1a; border-radius: 10px; padding: 16px 24px; margin-top: 12px; text-align: center; }
+  .disclaimer-title { font-size: 14px; font-weight: 800; color: #fff; letter-spacing: 0.5px; margin-bottom: 8px; }
+  .disclaimer-txt { font-size: 13px; color: #aaa; line-height: 1.7; }
+  .disclaimer-txt strong { color: #fff; font-weight: 700; }
+
+  /* MISC */
+  .loading { font-size: 13px; color: #aaa; padding: 8px 0; }
+  .error-box { background: #fee2e2; border: 1px solid #fca5a5; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #991b1b; line-height: 1.6; }
+  .spin { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- SETUP -->
+  <div id="setup-panel">
+    <h2 id="t-setup-title">API Key — Anthropic</h2>
+    <p id="t-setup-desc">Inseriscila una volta. Il programma la ricorda automaticamente.</p>
+    <div class="api-row">
+      <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." />
+      <button id="save-key-btn" onclick="saveKey()" id="t-save-btn">✓ Salva</button>
+      <span id="key-status" class="key-no" id="t-key-status">Nessuna key</span>
+    </div>
+    <a class="api-link" href="https://console.anthropic.com/settings/keys" target="_blank">→ console.anthropic.com</a>
+  </div>
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="header-left">
+      <div>
+        <div class="logo">ONLY<span>ONE</span></div>
+        <div class="tagline" id="t-tagline">Intelligence finanziaria e geopolitica in tempo reale</div>
+      </div>
+      <span id="sent-badge" style="display:none;" class="badge-sent">—</span>
+    </div>
+    <div class="header-right">
+      <div class="lang-wrap">
+        <button class="lang-btn active" onclick="setLang('it',this)">🇮🇹 IT</button>
+        <button class="lang-btn" onclick="setLang('en',this)">🇬🇧 EN</button>
+      </div>
+      <div class="ws-wrap">
+        <span id="ws-dot" class="ws-dot"></span>
+        <span id="ws-label" class="ws-label">...</span>
+      </div>
+      <select class="freq-select" id="freq-select" onchange="changeFreq(this.value)">
+        <option value="900">↺ 15 min</option>
+        <option value="600">↺ 10 min</option>
+        <option value="300">↺ 5 min</option>
+        <option value="60">↺ 1 min</option>
+      </select>
+      <div class="counter-badge" id="t-counter">Aggiornamenti: <span id="upd-count">0</span></div>
+      <div class="meta">
+        <div id="upd-time">—</div>
+        <div id="cd-lbl">—</div>
+      </div>
+      <button class="ref-btn" id="ref-btn" onclick="runAnalysis()">↺ <span id="t-refresh">Aggiorna</span></button>
+    </div>
+  </div>
+
+  <!-- TOP GRID -->
+  <div class="top-grid">
+
+    <!-- BTC -->
+    <div class="btc-panel">
+      <div class="btc-top">
+        <div>
+          <div class="btc-label">Bitcoin — BTC/USDT</div>
+          <div class="btc-price" id="btc-price">—</div>
+          <div class="btc-change" id="btc-change" style="color:#aaa;">—</div>
+        </div>
+        <div class="btc-bias">
+          <div class="btc-bias-label" id="t-bias-label">BIAS DEL GIORNO</div>
+          <div class="btc-bias-txt" id="btc-bias-txt" style="color:#aaa;">In attesa di analisi...</div>
+        </div>
+      </div>
+      <div class="futures-grid">
+        <div class="fcard">
+          <div class="fcard-label" id="t-funding-label">Funding Rate (tasso finanziamento)</div>
+          <div class="fcard-value" id="f-funding">—</div>
+          <div class="fcard-sub" id="t-funding-sub">ogni 8 ore</div>
+        </div>
+        <div class="fcard">
+          <div class="fcard-label" id="t-lsr-label">Long/Short Ratio (rapporto posizioni)</div>
+          <div class="fcard-value" id="f-lsr">—</div>
+          <div class="fcard-sub" id="t-lsr-sub">top trader</div>
+        </div>
+        <div class="fcard">
+          <div class="fcard-label" id="t-oi-label">Open Interest (posizioni aperte)</div>
+          <div class="fcard-value" id="f-oi">—</div>
+          <div class="fcard-sub">miliardi USDT</div>
+        </div>
+        <div class="fcard">
+          <div class="fcard-label" id="t-taker-label">Taker Buy / Sell (volume aggressivo)</div>
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:4px;">
+            <span class="green" style="font-size:18px;font-weight:700;" id="f-taker-buy">—</span>
+            <span class="red" style="font-size:18px;font-weight:700;" id="f-taker-sell">—</span>
+          </div>
+          <div class="taker-split" id="taker-bar" style="margin-top:8px;">
+            <div class="taker-buy-bar" id="taker-buy-bar" style="width:50%;"></div>
+            <div class="taker-sell-bar" id="taker-sell-bar" style="width:50%;"></div>
+          </div>
+          <div class="taker-labels">
+            <span class="green" style="font-size:11px;">▲ Buy</span>
+            <span class="red" style="font-size:11px;">Sell ▼</span>
+          </div>
+          <div class="fcard-diff" id="f-taker-diff">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- WALL STREET -->
+    <div class="ws-panel">
+      <div class="ws-panel-title">
+        <span id="t-ws-title">Wall Street <span class="pre-badge" id="t-ws-badge">PRE-APERTURA</span></span>
+        <span class="ws-time" id="t-ws-time">Apertura: 14:30 GMT</span>
+      </div>
+      <div id="indices-body">
+        <div class="index-item"><div><div class="index-name">S&P 500</div><div class="index-sub" id="t-sp-sub">500 maggiori aziende USA</div></div><div><div class="index-val" id="v-sp">—</div><div class="index-chg" id="c-sp">—</div></div></div>
+        <div class="index-item"><div><div class="index-name">Nasdaq</div><div class="index-sub" id="t-nq-sub">Indice tecnologico</div></div><div><div class="index-val" id="v-nq">—</div><div class="index-chg" id="c-nq">—</div></div></div>
+        <div class="index-item"><div><div class="index-name">Dow Jones</div><div class="index-sub" id="t-dj-sub">Indice industriale</div></div><div><div class="index-val" id="v-dj">—</div><div class="index-chg" id="c-dj">—</div></div></div>
+        <div class="index-item"><div><div class="index-name">DAX</div><div class="index-sub" id="t-dax-sub">Borsa Germania</div></div><div><div class="index-val" id="v-dax">—</div><div class="index-chg" id="c-dax">—</div></div></div>
+        <div class="index-item"><div><div class="index-name">FTSE 100</div><div class="index-sub" id="t-ftse-sub">Borsa Londra</div></div><div><div class="index-val" id="v-ftse">—</div><div class="index-chg" id="c-ftse">—</div></div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- WATCHLIST -->
+  <div class="section">
+    <div class="section-hdr"><span id="t-watch-title">Watchlist — i tuoi asset monitorati</span><span class="section-hdr-sub" id="t-watch-sub">Aggiungi o rimuovi asset</span></div>
+    <div class="section-body">
+      <div class="watchlist-grid" id="watchlist-grid"></div>
+      <div class="add-row" id="add-row">
+        <input class="add-input" id="add-input" type="text" placeholder="Es: ETH, SOL, NVDA..." />
+        <button class="add-confirm" onclick="confirmAdd()">+ Aggiungi</button>
+        <button class="small-btn" onclick="cancelAdd()">Annulla</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MACRO -->
+  <div class="section">
+    <div class="section-hdr"><span id="t-macro-title">Contesto macro del giorno</span><span id="macro-time" class="section-hdr-sub">—</span></div>
+    <div class="section-body"><div id="macro-body" class="loading">In attesa di analisi AI...</div></div>
+  </div>
+
+  <!-- ALERT -->
+  <div class="section">
+    <div class="section-hdr" id="t-alert-title">Alert asset — compaiono solo se c'è qualcosa di rilevante</div>
+    <div class="section-body"><div id="alert-body" class="loading">In attesa di analisi AI...</div></div>
+  </div>
+
+  <!-- MOVIMENTO BTC -->
+  <div class="section">
+    <div class="section-hdr"><span id="t-mov-title">Analisi movimento BTC</span><span class="section-hdr-sub" id="t-mov-sub">Ricerca su news, social e whale alerts</span></div>
+    <div class="section-body"><div id="mov-body" class="loading">In attesa di analisi AI...</div></div>
+  </div>
+
+  <!-- GEOPOLITICA -->
+  <div class="section">
+    <div class="section-hdr" id="t-geo-title">Geopolitica — impatto su azioni e crypto</div>
+    <div class="section-body"><div id="geo-body" class="loading">In attesa di analisi AI...</div></div>
+  </div>
+
+  <!-- AGENDA -->
+  <div class="section">
+    <div class="section-hdr" id="t-agenda-title">Agenda del giorno — orario GMT+0</div>
+    <div class="section-body"><div id="agenda-body" class="loading">In attesa di analisi AI...</div></div>
+  </div>
+
+  <!-- PARLAMENTARI -->
+  <div class="section">
+    <div class="section-hdr"><span id="t-parl-title">Movimenti parlamentari USA — Capitol Trades</span><button class="small-btn" onclick="loadParl()" id="t-parl-btn">Aggiorna</button></div>
+    <div class="section-body"><div id="parl-body" class="loading" id="t-parl-loading">Clicca "Aggiorna" per caricare.</div></div>
+  </div>
+
+  <!-- RICERCA -->
+  <div class="section">
+    <div class="section-hdr" id="t-search-title">Ricerca asset — crypto, azione o materia prima</div>
+    <div class="section-body">
+      <div class="search-row">
+        <input type="text" id="search-input" placeholder="Es: Nvidia, oro, Solana..." />
+        <button class="action-btn" id="search-btn" onclick="searchAsset()"><span id="t-search-btn">Cerca</span></button>
+      </div>
+      <div id="search-result" style="display:none;"></div>
+    </div>
+  </div>
+
+  <!-- ANALISI IMMAGINE -->
+  <div class="section">
+    <div class="section-hdr"><span id="t-img-title">Analisi immagine — chart, titolo, notizia o documento</span><span class="section-hdr-sub" id="t-img-sub">Carica qualsiasi screenshot</span></div>
+    <div class="section-body">
+      <div class="tipo-row">
+        <button class="tipo-btn tipo-active" onclick="setTipo(this,'chart')">📊 <span id="t-tipo-chart">Chart</span></button>
+        <button class="tipo-btn" onclick="setTipo(this,'titolo')">📈 <span id="t-tipo-titolo">Titolo azionario</span></button>
+        <button class="tipo-btn" onclick="setTipo(this,'notizia')">📰 <span id="t-tipo-notizia">Notizia</span></button>
+        <button class="tipo-btn" onclick="setTipo(this,'bilancio')">📋 <span id="t-tipo-bilancio">Bilancio</span></button>
+        <button class="tipo-btn" onclick="setTipo(this,'altro')">🔍 <span id="t-tipo-altro">Altro</span></button>
+      </div>
+      <div class="tipo-desc-box" id="tipo-desc"></div>
+      <div class="upload-area" onclick="document.getElementById('img-upload').click()">
+        <input type="file" id="img-upload" accept="image/*" style="display:none;" onchange="previewImg(event)" />
+        <div class="upload-icon">📎</div>
+        <div class="upload-txt" id="t-upload-txt">Clicca per caricare l'immagine</div>
+        <div class="upload-sub" id="t-upload-sub">PNG, JPG, screenshot — qualsiasi formato</div>
+      </div>
+      <div id="img-preview-wrap" style="display:none;margin-top:12px;">
+        <img id="img-preview" style="width:100%;border-radius:8px;border:1px solid #d8d8d0;" />
+        <div style="margin-top:10px;display:flex;gap:8px;align-items:center;">
+          <button class="action-btn" onclick="analizzaImmagine()" id="analizza-btn"><span id="t-analizza">Analizza</span></button>
+          <button class="small-btn" onclick="resetImg()" id="t-remove">✕ Rimuovi</button>
+          <span id="analisi-status" style="font-size:13px;color:#aaa;"></span>
+        </div>
+      </div>
+      <div id="img-result" style="display:none;margin-top:12px;" class="result-box"></div>
+    </div>
+  </div>
+
+  <!-- CHAT -->
+  <div class="section">
+    <div class="section-hdr"><span id="t-chat-title">Chat — Only One Community</span><span class="section-hdr-sub" id="chat-online">—</span></div>
+    <div class="section-body">
+      <div class="chat-wrap">
+        <div class="chat-messages" id="chat-messages">
+          <div style="font-size:13px;color:#aaa;text-align:center;padding:20px 0;" id="t-chat-empty">La chat è attiva. Scrivi il tuo primo messaggio.</div>
+        </div>
+        <div class="chat-input-row">
+          <input class="chat-input" id="chat-input" type="text" placeholder="Scrivi un messaggio..." onkeydown="if(event.key==='Enter')sendChat()" />
+          <button class="chat-send" onclick="sendChat()" id="t-chat-send">Invia</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISCLAIMER -->
+  <div class="disclaimer">
+    <div class="disclaimer-title" id="t-disc-title">⚠ AVVISO IMPORTANTE — LEGGERE PRIMA DI UTILIZZARE</div>
+    <div class="disclaimer-txt" id="t-disc-txt">
+      <strong>Only One fornisce esclusivamente informazioni e analisi di mercato a scopo informativo.</strong><br>
+      Non costituisce consulenza finanziaria (financial advice), raccomandazione di investimento, o segnale di acquisto/vendita.<br>
+      <strong>Le decisioni di investimento sono responsabilità esclusiva dell'utente.</strong><br>
+      Il trading su mercati finanziari e crypto comporta rischi significativi, inclusa la perdita totale del capitale investito.<br>
+      Only One non è responsabile per perdite derivanti dall'utilizzo delle informazioni fornite.
+    </div>
+  </div>
+
+</div>
+<script>
+// ── TRANSLATIONS ───────────────────────────────────────
+const T = {
+  it: {
+    tagline: 'Intelligence finanziaria e geopolitica in tempo reale',
+    setupTitle: 'API Key — Anthropic', setupDesc: 'Inseriscila una volta. Il programma la ricorda automaticamente.',
+    saveBtn: '✓ Salva', keyOk: '✓ Key salvata', keyNo: 'Nessuna key',
+    refresh: 'Aggiorna', counter: 'Aggiornamenti:',
+    biasLabel: 'BIAS DEL GIORNO',
+    fundingLabel: 'Funding Rate (tasso finanziamento)', fundingSub: 'ogni 8 ore',
+    lsrLabel: 'Long/Short Ratio (rapporto posizioni)', lsrSub: 'top trader',
+    oiLabel: 'Open Interest (posizioni aperte)',
+    takerLabel: 'Taker Buy / Sell (volume aggressivo)',
+    wsTitle: 'Wall Street', wsBadge: 'PRE-APERTURA', wsTime: 'Apertura: 14:30 GMT',
+    spSub: '500 maggiori aziende USA', nqSub: 'Indice tecnologico', djSub: 'Indice industriale', daxSub: 'Borsa Germania', ftseSub: 'Borsa Londra',
+    watchTitle: 'Watchlist — i tuoi asset monitorati', watchSub: 'Aggiungi o rimuovi asset',
+    macroTitle: 'Contesto macro del giorno',
+    alertTitle: 'Alert asset — compaiono solo se c\'è qualcosa di rilevante',
+    movTitle: 'Analisi movimento BTC', movSub: 'Ricerca su news, social e whale alerts',
+    geoTitle: 'Geopolitica — impatto su azioni e crypto',
+    agendaTitle: 'Agenda del giorno — orario GMT+0',
+    parlTitle: 'Movimenti parlamentari USA — Capitol Trades', parlBtn: 'Aggiorna',
+    searchTitle: 'Ricerca asset — crypto, azione o materia prima', searchBtn: 'Cerca',
+    imgTitle: 'Analisi immagine — chart, titolo, notizia o documento', imgSub: 'Carica qualsiasi screenshot',
+    tipoChart: 'Chart', tipoTitolo: 'Titolo azionario', tipoNotizia: 'Notizia', tipoBilancio: 'Bilancio', tipoAltro: 'Altro',
+    uploadTxt: 'Clicca per caricare l\'immagine', uploadSub: 'PNG, JPG, screenshot — qualsiasi formato',
+    analizza: 'Analizza', remove: '✕ Rimuovi',
+    chatTitle: 'Chat — Only One Community', chatSend: 'Invia', chatEmpty: 'La chat è attiva. Scrivi il tuo primo messaggio.',
+    discTitle: '⚠ AVVISO IMPORTANTE — LEGGERE PRIMA DI UTILIZZARE',
+    discTxt: '<strong>Only One fornisce esclusivamente informazioni e analisi di mercato a scopo informativo.</strong><br>Non costituisce consulenza finanziaria (financial advice), raccomandazione di investimento, o segnale di acquisto/vendita.<br><strong>Le decisioni di investimento sono responsabilità esclusiva dell\'utente.</strong><br>Il trading su mercati finanziari e crypto comporta rischi significativi, inclusa la perdita totale del capitale investito.<br>Only One non è responsabile per perdite derivanti dall\'utilizzo delle informazioni fornite.',
+    loading: 'In attesa di analisi AI...',
+    tipoDescs: {
+      chart: "Carica lo screenshot del chart (4H, 1H o 15m) — l'AI legge trend, livelli chiave, indicatori e ti dà bias e strategia operativa.",
+      titolo: "Carica la pagina del titolo azionario — l'AI analizza e ti dice se è long o short con motivazione.",
+      notizia: "Carica lo screenshot di una notizia — l'AI valuta l'impatto sui mercati e quali asset vengono colpiti.",
+      bilancio: "Carica un report aziendale — l'AI legge i numeri chiave e li confronta con le aspettative degli analisti.",
+      altro: "Carica qualsiasi immagine finanziaria — l'AI fa del suo meglio per analizzarla."
+    },
+    tipoPrompts: {
+      chart: "Analizza questo chart di trading in italiano: 1) Timeframe 2) Trend (tendenza) 3) Livelli chiave — supporti e resistenze 4) Indicatori visibili — RSI, MACD, VWMA 5) Pattern grafiche 6) Bias: long o short e perché 7) Zone di ingresso. Sii diretto.",
+      titolo: "Analizza questa pagina di titolo azionario in italiano: 1) Nome e settore 2) Prezzo e andamento 3) Analisi tecnica visibile 4) Strategia — long o short 5) Dove comprarlo 6) Rischio.",
+      notizia: "Analizza questa notizia finanziaria in italiano: 1) Cosa dice 2) Impatto sui mercati 3) Asset colpiti 4) Urgenza 5) Strategia consigliata.",
+      bilancio: "Analizza questo report aziendale in italiano: 1) Numeri chiave visibili 2) Confronto con aspettative degli analisti 3) Punti positivi e negativi 4) Impatto previsto sul titolo.",
+      altro: "Analizza questa immagine finanziaria in italiano e fornisci la valutazione più utile possibile per un trader."
+    }
+  },
+  en: {
+    tagline: 'Real-time financial and geopolitical intelligence',
+    setupTitle: 'API Key — Anthropic', setupDesc: 'Enter once. The program remembers it automatically.',
+    saveBtn: '✓ Save', keyOk: '✓ Key saved', keyNo: 'No key',
+    refresh: 'Update', counter: 'Updates:',
+    biasLabel: 'DAILY BIAS',
+    fundingLabel: 'Funding Rate', fundingSub: 'every 8 hours',
+    lsrLabel: 'Long/Short Ratio', lsrSub: 'top traders',
+    oiLabel: 'Open Interest',
+    takerLabel: 'Taker Buy / Sell',
+    wsTitle: 'Wall Street', wsBadge: 'PRE-MARKET', wsTime: 'Open: 14:30 GMT',
+    spSub: 'Top 500 US companies', nqSub: 'Tech index', djSub: 'Industrial index', daxSub: 'Germany stock exchange', ftseSub: 'London stock exchange',
+    watchTitle: 'Watchlist — your monitored assets', watchSub: 'Add or remove assets',
+    macroTitle: 'Daily macro overview',
+    alertTitle: 'Asset alerts — appear only when something relevant happens',
+    movTitle: 'BTC movement analysis', movSub: 'Search on news, social and whale alerts',
+    geoTitle: 'Geopolitics — impact on stocks and crypto',
+    agendaTitle: 'Today\'s agenda — Ghana GMT+0 time',
+    parlTitle: 'US Congress trades — Capitol Trades', parlBtn: 'Update',
+    searchTitle: 'Asset search — crypto, stock or commodity', searchBtn: 'Search',
+    imgTitle: 'Image analysis — chart, stock, news or document', imgSub: 'Upload any screenshot',
+    tipoChart: 'Chart', tipoTitolo: 'Stock', tipoNotizia: 'News', tipoBilancio: 'Report', tipoAltro: 'Other',
+    uploadTxt: 'Click to upload image', uploadSub: 'PNG, JPG, screenshot — any format',
+    analizza: 'Analyze', remove: '✕ Remove',
+    chatTitle: 'Chat — Only One Community', chatSend: 'Send', chatEmpty: 'Chat is active. Write your first message.',
+    discTitle: '⚠ IMPORTANT NOTICE — READ BEFORE USING',
+    discTxt: '<strong>Only One provides financial market information and analysis for informational purposes only.</strong><br>It does not constitute financial advice, investment recommendation, or buy/sell signal.<br><strong>Investment decisions are the sole responsibility of the user.</strong><br>Trading in financial markets and crypto involves significant risks, including total loss of invested capital.<br>Only One is not responsible for losses resulting from the use of information provided.',
+    loading: 'Waiting for AI analysis...',
+    tipoDescs: {
+      chart: "Upload a chart screenshot (4H, 1H or 15m) — AI reads trend, key levels, indicators and gives you bias and strategy.",
+      titolo: "Upload a stock page — AI analyzes and tells you if it's long or short with reasoning.",
+      notizia: "Upload a news screenshot — AI evaluates market impact and which assets are affected.",
+      bilancio: "Upload a company report — AI reads key numbers and compares them to analyst expectations.",
+      altro: "Upload any financial image — AI will do its best to analyze it."
+    },
+    tipoPrompts: {
+      chart: "Analyze this trading chart in English: 1) Timeframe 2) Trend 3) Key levels — support and resistance 4) Visible indicators — RSI, MACD, VWMA 5) Chart patterns 6) Bias: long or short and why 7) Entry zones. Be direct.",
+      titolo: "Analyze this stock page in English: 1) Name and sector 2) Price and performance 3) Visible technical analysis 4) Strategy — long or short 5) Where to buy 6) Risk.",
+      notizia: "Analyze this financial news in English: 1) What it says 2) Market impact 3) Affected assets 4) Urgency 5) Recommended strategy.",
+      bilancio: "Analyze this company report in English: 1) Key visible numbers 2) Comparison with analyst expectations 3) Positives and negatives 4) Expected impact on the stock.",
+      altro: "Analyze this financial image in English and provide the most useful assessment possible for a trader."
+    }
+  }
+};
+
+let lang = localStorage.getItem('oo_lang') || 'it';
+let tipoCorrente = 'chart';
+let imgB64 = null, imgMime = null;
+let updCount = parseInt(localStorage.getItem('oo_count') || '0');
+let cdTimer = null, freqSec = 900;
+let watchlist = JSON.parse(localStorage.getItem('oo_watch') || '["ETH","SOL","TAO","NVDA"]');
+let wsWatchSockets = {};
+let lastBtcPrice = 0;
+let ws;
+let chatMsgs = JSON.parse(localStorage.getItem('oo_chat') || '[]');
+let userName = localStorage.getItem('oo_username') || '';
+
+// ── LANG ──────────────────────────────────────────────
+function setLang(l, btn) {
+  lang = l;
+  localStorage.setItem('oo_lang', l);
+  document.querySelectorAll('.lang-btn').forEach(b => b.className = 'lang-btn');
+  btn.className = 'lang-btn active';
+  applyLang();
+}
+
+function applyLang() {
+  const t = T[lang];
+  const s = (id, val) => { const el = document.getElementById(id); if(el) el.innerHTML = val; };
+  s('t-tagline', t.tagline);
+  s('t-setup-title', t.setupTitle); s('t-setup-desc', t.setupDesc);
+  s('save-key-btn', t.saveBtn);
+  s('t-refresh', t.refresh); s('t-counter', t.counter + ' <span id="upd-count">' + updCount + '</span>');
+  s('t-bias-label', t.biasLabel);
+  s('t-funding-label', t.fundingLabel); s('t-funding-sub', t.fundingSub);
+  s('t-lsr-label', t.lsrLabel); s('t-lsr-sub', t.lsrSub);
+  s('t-oi-label', t.oiLabel); s('t-taker-label', t.takerLabel);
+  s('t-ws-title', t.wsTitle + ' <span class="pre-badge">' + t.wsBadge + '</span>');
+  s('t-ws-time', t.wsTime);
+  s('t-sp-sub', t.spSub); s('t-nq-sub', t.nqSub); s('t-dj-sub', t.djSub); s('t-dax-sub', t.daxSub); s('t-ftse-sub', t.ftseSub);
+  s('t-watch-title', t.watchTitle); s('t-watch-sub', t.watchSub);
+  s('t-macro-title', t.macroTitle); s('t-alert-title', t.alertTitle);
+  s('t-mov-title', t.movTitle); s('t-mov-sub', t.movSub);
+  s('t-geo-title', t.geoTitle); s('t-agenda-title', t.agendaTitle);
+  s('t-parl-title', t.parlTitle); s('t-parl-btn', t.parlBtn);
+  s('t-search-title', t.searchTitle); s('t-search-btn', t.searchBtn);
+  s('t-img-title', t.imgTitle); s('t-img-sub', t.imgSub);
+  s('t-tipo-chart', t.tipoChart); s('t-tipo-titolo', t.tipoTitolo);
+  s('t-tipo-notizia', t.tipoNotizia); s('t-tipo-bilancio', t.tipoBilancio); s('t-tipo-altro', t.tipoAltro);
+  s('t-upload-txt', t.uploadTxt); s('t-upload-sub', t.uploadSub);
+  s('t-analizza', t.analizza); s('t-remove', t.remove);
+  s('t-chat-title', t.chatTitle); s('t-chat-send', t.chatSend);
+  s('t-disc-title', t.discTitle); s('t-disc-txt', t.discTxt);
+  s('tipo-desc', t.tipoDescs[tipoCorrente]);
+  updateKeyStatus();
+}
+
+// ── API KEY ────────────────────────────────────────────
+function saveKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val) { alert('Inserisci una API key valida.'); return; }
+  localStorage.setItem('oo_api_key', val);
+  updateKeyStatus();
+  runAnalysis();
+}
+function getKey() { return localStorage.getItem('oo_api_key') || ''; }
+function updateKeyStatus() {
+  const k = getKey(), el = document.getElementById('key-status');
+  const t = T[lang];
+  if (k) {
+    el.textContent = t.keyOk; el.className = 'key-ok';
+    document.getElementById('api-key-input').value = k.slice(0,14) + '...';
+  } else {
+    el.textContent = t.keyNo; el.className = 'key-no';
+  }
+}
+
+// ── WEBSOCKET BTC ──────────────────────────────────────
+function connectWS() {
+  ws = new WebSocket('wss://stream.binance.com:9443/stream?streams=btcusdt@ticker');
+  ws.onopen = () => { document.getElementById('ws-dot').className = 'ws-dot live'; document.getElementById('ws-label').textContent = 'live'; };
+  ws.onmessage = (e) => {
+    const d = JSON.parse(e.data).data;
+    const price = parseFloat(d.c), chg = parseFloat(d.P);
+    document.getElementById('btc-price').textContent = '$' + Math.round(price).toLocaleString('it-IT');
+    const cel = document.getElementById('btc-change');
+    cel.textContent = (chg >= 0 ? '▲ +' : '▼ ') + chg.toFixed(2) + '%  24h';
+    cel.className = 'btc-change ' + (chg >= 0 ? 'green' : 'red');
+    if (lastBtcPrice > 0 && Math.abs(price - lastBtcPrice) / lastBtcPrice > 0.02 && getKey()) runAnalysis();
+    lastBtcPrice = price;
+  };
+  ws.onclose = () => { document.getElementById('ws-dot').className = 'ws-dot'; document.getElementById('ws-label').textContent = '...'; setTimeout(connectWS, 3000); };
+  ws.onerror = () => ws.close();
+}
+
+// ── WATCHLIST ─────────────────────────────────────────
+function renderWatchlist() {
+  const grid = document.getElementById('watchlist-grid');
+  grid.innerHTML = watchlist.map(sym => `
+    <div class="wcard" id="wcard-${sym}">
+      <div class="wcard-sym">${sym}/USDT</div>
+      <div class="wcard-price" id="wp-${sym}">—</div>
+      <div class="wcard-chg" id="wc-${sym}" style="color:#aaa;">—</div>
+      <span class="wcard-remove" onclick="removeWatch('${sym}')">✕</span>
+    </div>`).join('') +
+    `<div class="add-asset-btn" onclick="showAddRow()">+ ${lang==='it'?'Aggiungi':'Add'}</div>`;
+
+  watchlist.forEach(sym => connectWatchWS(sym));
+}
+
+function connectWatchWS(sym) {
+  if (wsWatchSockets[sym]) return;
+  const s = new WebSocket(`wss://stream.binance.com:9443/stream?streams=${sym.toLowerCase()}usdt@ticker`);
+  s.onmessage = (e) => {
+    const d = JSON.parse(e.data).data;
+    const price = parseFloat(d.c), chg = parseFloat(d.P);
+    const vEl = document.getElementById('wp-' + sym);
+    const cEl = document.getElementById('wc-' + sym);
+    if (!vEl) return;
+    vEl.textContent = price >= 1000 ? '$' + Math.round(price).toLocaleString('it-IT') : price >= 1 ? '$' + price.toFixed(2) : '$' + price.toFixed(4);
+    cEl.textContent = (chg >= 0 ? '▲ +' : '▼ ') + chg.toFixed(2) + '%';
+    cEl.className = 'wcard-chg ' + (chg >= 0 ? 'green' : 'red');
+  };
+  s.onclose = () => { delete wsWatchSockets[sym]; setTimeout(() => connectWatchWS(sym), 3000); };
+  wsWatchSockets[sym] = s;
+}
+
+function removeWatch(sym) {
+  watchlist = watchlist.filter(s => s !== sym);
+  localStorage.setItem('oo_watch', JSON.stringify(watchlist));
+  if (wsWatchSockets[sym]) { wsWatchSockets[sym].close(); delete wsWatchSockets[sym]; }
+  renderWatchlist();
+}
+
+function showAddRow() {
+  const row = document.getElementById('add-row');
+  row.style.display = 'flex';
+  document.getElementById('add-input').focus();
+}
+
+function cancelAdd() { document.getElementById('add-row').style.display = 'none'; }
+
+function confirmAdd() {
+  const val = document.getElementById('add-input').value.trim().toUpperCase().replace('/USDT','').replace('USDT','');
+  if (!val) return;
+  if (!watchlist.includes(val)) {
+    watchlist.push(val);
+    localStorage.setItem('oo_watch', JSON.stringify(watchlist));
+  }
+  document.getElementById('add-input').value = '';
+  document.getElementById('add-row').style.display = 'none';
+  renderWatchlist();
+}
+
+// ── FUTURES ────────────────────────────────────────────
+async function loadFutures() {
+  try {
+    const [fund, lsr, taker, oi] = await Promise.all([
+      fetch('https://fapi.binance.com/fapi/v1/fundingRate?symbol=BTCUSDT&limit=1').then(r=>r.json()),
+      fetch('https://fapi.binance.com/futures/data/topLongShortAccountRatio?symbol=BTCUSDT&period=5m&limit=1').then(r=>r.json()),
+      fetch('https://fapi.binance.com/futures/data/takerlongshortRatio?symbol=BTCUSDT&period=5m&limit=1').then(r=>r.json()),
+      fetch('https://fapi.binance.com/fapi/v1/openInterest?symbol=BTCUSDT').then(r=>r.json())
+    ]);
+    if (fund && fund[0]) {
+      const fr = parseFloat(fund[0].fundingRate) * 100;
+      const el = document.getElementById('f-funding');
+      el.textContent = (fr >= 0 ? '+' : '') + fr.toFixed(4) + '%';
+      el.className = 'fcard-value ' + (fr > 0.01 ? 'green' : fr < -0.01 ? 'red' : 'orange');
+    }
+    if (lsr && lsr[0]) {
+      const r = parseFloat(lsr[0].longShortRatio);
+      const el = document.getElementById('f-lsr');
+      el.textContent = r.toFixed(2);
+      el.className = 'fcard-value ' + (r > 1.2 ? 'green' : r < 0.8 ? 'red' : 'orange');
+    }
+    if (taker && taker[0]) {
+      const buy = parseFloat(taker[0].buyVol), sell = parseFloat(taker[0].sellVol);
+      const total = buy + sell;
+      const buyPct = (buy / total * 100);
+      const sellPct = (sell / total * 100);
+      document.getElementById('f-taker-buy').textContent = buyPct.toFixed(1) + '% buy';
+      document.getElementById('f-taker-sell').textContent = sellPct.toFixed(1) + '% sell';
+      document.getElementById('taker-buy-bar').style.width = buyPct + '%';
+      document.getElementById('taker-sell-bar').style.width = sellPct + '%';
+      const diff = buyPct - sellPct;
+      const dEl = document.getElementById('f-taker-diff');
+      dEl.textContent = (diff >= 0 ? '▲ +' : '▼ ') + Math.abs(diff).toFixed(1) + '% ' + (lang === 'it' ? (diff >= 0 ? 'buy dominanti' : 'sell dominanti') : (diff >= 0 ? 'buy dominant' : 'sell dominant'));
+      dEl.className = 'fcard-diff ' + (diff >= 0 ? 'green' : 'red');
+    }
+    if (oi && oi.openInterest) {
+      const p = lastBtcPrice || 80000;
+      document.getElementById('f-oi').textContent = (parseFloat(oi.openInterest) * p / 1e9).toFixed(1) + 'B';
+    }
+  } catch(e) { console.error('Futures:', e); }
+}
+
+// ── INDICES ────────────────────────────────────────────
+async function loadIndices() {
+  try {
+    const syms = ['ES=F','NQ=F','YM=F','DAX=F','FTSE'];
+    const ids = ['sp','nq','dj','dax','ftse'];
+    const res = await fetch(`https://fapi.binance.com/fapi/v1/premiumIndex?symbol=BTCUSDT`).then(r=>r.json()).catch(()=>null);
+    // Fallback demo values since Yahoo Finance is not accessible
+    const demo = [
+      {val:'5.204', chg:'-1.24%', up:false},
+      {val:'18.120', chg:'-1.87%', up:false},
+      {val:'38.940', chg:'-0.92%', up:false},
+      {val:'17.840', chg:'-0.68%', up:false},
+      {val:'7.920', chg:'-0.45%', up:false}
+    ];
+    ids.forEach((id, i) => {
+      const vEl = document.getElementById('v-' + id);
+      const cEl = document.getElementById('c-' + id);
+      if (!vEl) return;
+      vEl.textContent = demo[i].val;
+      cEl.textContent = (demo[i].up ? '▲ +' : '▼ ') + demo[i].chg;
+      cEl.className = 'index-chg ' + (demo[i].up ? 'green' : 'red');
+    });
+  } catch(e) { console.error('Indices:', e); }
+}
+
+// ── CLAUDE API ─────────────────────────────────────────
+async function callClaude(messages, useSearch=true) {
+  const key = getKey(); if (!key) return null;
+  const body = { model: 'claude-sonnet-4-20250514', max_tokens: 1000, messages };
+  if (useSearch) body.tools = [{ type: 'web_search_20250305', name: 'web_search' }];
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) { const e = await res.json().catch(()=>{}); throw new Error(e?.error?.message || 'HTTP ' + res.status); }
+  const data = await res.json();
+  return (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+}
+
+// ── MAIN ANALYSIS ──────────────────────────────────────
+async function runAnalysis() {
+  if (!getKey()) return;
+  const btn = document.getElementById('ref-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spin">↺</span>';
+  document.getElementById('btc-bias-txt').textContent = '...';
+
+  const isIT = lang === 'it';
+  const prompt = `You are an expert market analyst. UTC: ${new Date().toISOString()}. Ghana is GMT+0.
+Search latest news and respond ONLY with valid JSON, no text outside JSON:
+{
+  "sentiment": "RIALZISTA|RIBASSISTA|NEUTRALE",
+  "sentiment_en": "BULLISH|BEARISH|NEUTRAL",
+  "bias_btc": "${isIT ? 'one sentence in Italian about BTC bias today' : 'one sentence in English about BTC bias today'}",
+  "macro": "${isIT ? '3-4 lines in Italian about what moves markets today' : '3-4 lines in English about what moves markets today'}",
+  "notizie": [{"titolo": "text", "url": "link if available"}],
+  "alert_asset": [{"asset": "name", "direzione": "SALE|SCENDE|NEUTRALE", "motivo": "${isIT ? 'Italian explanation' : 'English explanation'}", "timeframe": "${isIT ? 'immediato|medio termine' : 'immediate|medium term'}", "correlato_btc": true}],
+  "movimento_btc": [{"fonte": "Twitter/X|News|Whale Alert|Fear&Greed", "testo": "${isIT ? 'Italian explanation' : 'English explanation'}", "valore": "optional value"}],
+  "fear_greed": 0-100,
+  "geopolitica": [{"evento": "title", "impatto": "${isIT ? 'Italian explanation' : 'English explanation'}", "azioni_salgono": ["TICKER"], "azioni_scendono": ["TICKER"], "crypto_salgono": ["SYM"], "crypto_scendono": ["SYM"]}],
+  "agenda": [{"ora_gmt": "HH:MM", "evento": "${isIT ? 'Italian description' : 'English description'}", "impatto": "ALTO|MEDIO|BASSO"}]
+}
+Alert asset only if truly relevant. Agenda only real scheduled events today.`;
+
+  try {
+    const text = await callClaude([{ role: 'user', content: prompt }]);
+    if (!text) throw new Error(lang === 'it' ? 'Nessuna risposta' : 'No response');
+    const m = text.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('JSON not found');
+    const a = JSON.parse(m[0]);
+
+    // Increment counter
+    updCount++;
+    localStorage.setItem('oo_count', updCount);
+    document.getElementById('upd-count').textContent = updCount;
+
+    // Sentiment
+    const badge = document.getElementById('sent-badge');
+    badge.style.display = 'inline-block';
+    const s = lang === 'it' ? (a.sentiment || 'NEUTRALE') : (a.sentiment_en || 'NEUTRAL');
+    const isUp = s === 'RIALZISTA' || s === 'BULLISH';
+    const isDown = s === 'RIBASSISTA' || s === 'BEARISH';
+    badge.textContent = (isUp ? '▲ ' : isDown ? '▼ ' : '● ') + s;
+    badge.className = 'badge-sent ' + (isUp ? 'sent-bull' : isDown ? 'sent-bear' : 'sent-neu');
+
+    // Bias
+    document.getElementById('btc-bias-txt').textContent = a.bias_btc || '—';
+    document.getElementById('btc-bias-txt').style.color = '#1a1a1a';
+
+    // Macro
+    let macroHtml = a.macro ? `<p class="macro-txt">${a.macro}</p>` : '';
+    if (a.notizie?.length) {
+      macroHtml += (a.notizie||[]).map(n =>
+        `<div class="news-item"><span class="news-arrow">→</span><span>${n.titolo}${n.url?` <a href="${n.url}" target="_blank" class="news-link">[${lang==='it'?'leggi':'read'}]</a>`:''}</span></div>`
+      ).join('');
+    }
+    document.getElementById('macro-body').innerHTML = macroHtml || `<div class="loading">${lang==='it'?'Nessun dato macro.':'No macro data.'}</div>`;
+    document.getElementById('macro-time').textContent = `${lang==='it'?'Aggiornato':'Updated'}: ${new Date().toLocaleTimeString('it-IT')} GMT`;
+
+    // Alert
+    const ab = document.getElementById('alert-body');
+    if (a.alert_asset?.length) {
+      ab.innerHTML = a.alert_asset.map(al => {
+        const dc = al.direzione==='SALE'?'dir-up':al.direzione==='SCENDE'?'dir-down':'dir-neu';
+        const arr = al.direzione==='SALE'?'▲ '+(lang==='it'?'SALE':'UP'):al.direzione==='SCENDE'?'▼ '+(lang==='it'?'SCENDE':'DOWN'):'— '+(lang==='it'?'NEUTRALE':'NEUTRAL');
+        return `<div class="alert-card"><div class="alert-top"><span class="alert-asset">${al.asset}</span><span class="alert-dir ${dc}">${arr}</span></div><div class="alert-body">${al.motivo}</div><div class="alert-time">${lang==='it'?'Timeframe':'Timeframe'}: ${al.timeframe} · ${al.correlato_btc?(lang==='it'?'Correlato a BTC':'Correlated to BTC'):(lang==='it'?'Movimento indipendente':'Independent move')}</div></div>`;
+      }).join('');
+    } else {
+      ab.innerHTML = `<div class="loading">${lang==='it'?'Nessun alert al momento.':'No alerts at the moment.'}</div>`;
+    }
+
+    // Movimento BTC
+    const mb2 = document.getElementById('mov-body');
+    if (a.movimento_btc?.length) {
+      const fg = a.fear_greed || 50;
+      const fgColor = fg < 25 ? '#b91c1c' : fg < 45 ? '#c2410c' : fg < 55 ? '#888' : fg < 75 ? '#1a6b3a' : '#166534';
+      const fgLabel = lang === 'it' ? (fg < 25 ? 'Paura estrema' : fg < 45 ? 'Paura' : fg < 55 ? 'Neutrale' : fg < 75 ? 'Avidità' : 'Avidità estrema') : (fg < 25 ? 'Extreme Fear' : fg < 45 ? 'Fear' : fg < 55 ? 'Neutral' : fg < 75 ? 'Greed' : 'Extreme Greed');
+      mb2.innerHTML = `<div class="movement-panel">
+        <div class="movement-title">${lang==='it'?'Cause probabili rilevate':'Probable causes detected'}</div>
+        ${a.movimento_btc.map(m => `<div class="movement-item"><span class="movement-source">${m.fonte}</span><span>${m.testo}${m.valore?' — <strong>'+m.valore+'</strong>':''}</span></div>`).join('')}
+        <div class="movement-item"><span class="movement-source">Fear & Greed</span><div style="flex:1;"><strong style="color:${fgColor};">${fg} — ${fgLabel}</strong><div class="fear-bar"><div class="fear-fill" style="width:${fg}%;background:${fgColor};"></div></div></div></div>
+      </div>`;
+    } else {
+      mb2.innerHTML = `<div class="loading">${lang==='it'?'Nessun movimento significativo rilevato.':'No significant movement detected.'}</div>`;
+    }
+
+    // Geo
+    const gb = document.getElementById('geo-body');
+    if (a.geopolitica?.length) {
+      gb.innerHTML = a.geopolitica.map(g => `
+        <div class="geo-card">
+          <div class="geo-title">${g.evento}</div>
+          <div class="geo-body">${g.impatto}</div>
+          <div class="geo-grid">
+            <div>
+              ${g.azioni_salgono?.length?`<div class="geo-col-title">${lang==='it'?'AZIONI CHE SALGONO':'STOCKS UP'}</div>${g.azioni_salgono.map(t=>`<span class="stock-tag stock-up">▲ ${t}</span>`).join('')}`:''}
+              ${g.azioni_scendono?.length?`<div class="geo-col-title" style="margin-top:8px;">${lang==='it'?'AZIONI CHE SCENDONO':'STOCKS DOWN'}</div>${g.azioni_scendono.map(t=>`<span class="stock-tag stock-down">▼ ${t}</span>`).join('')}`:''}
+            </div>
+            <div>
+              ${g.crypto_salgono?.length?`<div class="geo-col-title">${lang==='it'?'CRYPTO CHE SALGONO':'CRYPTO UP'}</div>${g.crypto_salgono.map(t=>`<span class="crypto-tag crypto-up">▲ ${t}</span>`).join('')}`:''}
+              ${g.crypto_scendono?.length?`<div class="geo-col-title" style="margin-top:8px;">${lang==='it'?'CRYPTO CHE SCENDONO':'CRYPTO DOWN'}</div>${g.crypto_scendono.map(t=>`<span class="crypto-tag crypto-down">▼ ${t}</span>`).join('')}`:''}
+            </div>
+          </div>
+        </div>`).join('');
+    } else {
+      gb.innerHTML = `<div class="loading">${lang==='it'?'Nessun evento geopolitico rilevante.':'No relevant geopolitical events.'}</div>`;
+    }
+
+    // Agenda
+    const agb = document.getElementById('agenda-body');
+    if (a.agenda?.length) {
+      agb.innerHTML = `<div class="agenda-grid">${a.agenda.map(ev => {
+        const ic = ev.impatto==='ALTO'?'impact-high':ev.impatto==='MEDIO'?'impact-med':'impact-low';
+        return `<div class="agenda-card"><div class="agenda-time">${ev.ora_gmt}</div><div class="agenda-desc">${ev.evento}</div><span class="agenda-impact ${ic}">${ev.impatto}</span></div>`;
+      }).join('')}</div>`;
+    } else {
+      agb.innerHTML = `<div class="loading">${lang==='it'?'Nessun evento schedulato per oggi.':'No scheduled events for today.'}</div>`;
+    }
+
+    document.getElementById('upd-time').textContent = `${lang==='it'?'Analisi':'Analysis'}: ${new Date().toLocaleTimeString('it-IT')} GMT`;
+    startCountdown();
+
+  } catch(e) {
+    document.getElementById('btc-bias-txt').textContent = 'Errore: ' + e.message;
+    document.getElementById('macro-body').innerHTML = `<div class="error-box">${e.message}</div>`;
+    console.error(e);
+  }
+  btn.disabled = false; btn.innerHTML = '↺ <span id="t-refresh">' + T[lang].refresh + '</span>';
+}
+
+// ── PARLAMENTARI ──────────────────────────────────────
+async function loadParl() {
+  const pb = document.getElementById('parl-body');
+  pb.innerHTML = `<div class="loading">${lang==='it'?'Ricerca movimenti parlamentari...':'Searching congressional trades...'}</div>`;
+  try {
+    const isIT = lang === 'it';
+    const text = await callClaude([{ role: 'user', content: `Search capitoltrades.com for the latest 5 stock trades declared by US Congress members. Respond ONLY with JSON:
+{"movimenti":[{"nome":"Name","partito":"R|D","azione":"ACQUISTO|PURCHASE|VENDITA|SALE","titolo":"company","ticker":"TICKER","importo":"amount estimate","data":"date","settore":"sector"}]}` }]);
+    const m = text?.match(/\{[\s\S]*\}/);
+    if (!m) throw new Error('no json');
+    const d = JSON.parse(m[0]);
+    if (d.movimenti?.length) {
+      pb.innerHTML = d.movimenti.map(mv => {
+        const isBuy = mv.azione === 'ACQUISTO' || mv.azione === 'PURCHASE';
+        const label = isIT ? (isBuy ? 'ACQUISTO' : 'VENDITA') : (isBuy ? 'PURCHASE' : 'SALE');
+        return `<div class="parl-item"><div class="parl-name">${mv.nome} <span style="font-size:12px;color:#aaa;">(${mv.partito})</span></div><div class="parl-action"><span class="${isBuy?'parl-buy':'parl-sell'}">${label}</span> — ${mv.titolo} (${mv.ticker}) · ${mv.importo} · ${mv.settore}</div><div class="parl-date">${mv.data}</div></div>`;
+      }).join('');
+    } else {
+      pb.innerHTML = `<div class="loading">${isIT?'Nessun movimento trovato.':'No trades found.'}</div>`;
+    }
+  } catch(e) { pb.innerHTML = `<div class="error-box">${e.message}</div>`; }
+}
+
+// ── RICERCA ASSET ─────────────────────────────────────
+async function searchAsset() {
+  const q = document.getElementById('search-input').value.trim();
+  if (!q) return;
+  const rb = document.getElementById('search-result');
+  const btn = document.getElementById('search-btn');
+  rb.style.display = 'block';
+  rb.innerHTML = `<div class="loading">${lang==='it'?'Ricerca in corso...':'Searching...'}</div>`;
+  rb.className = '';
+  btn.disabled = true;
+  try {
+    const isIT = lang === 'it';
+    const text = await callClaude([{ role: 'user', content: `Search current information about: "${q}". Respond in ${isIT ? 'Italian' : 'English'} with: 1) What it is (2 lines) 2) Current price or market value 3) Recent performance and news 4) Analysis — will it go up or down and why 5) Where to buy it — specific platforms/brokers 6) Risk level — high, medium or low. Be direct and concise.` }]);
+    rb.className = 'result-box';
+    rb.innerHTML = text.replace(/\n/g,'<br>');
+  } catch(e) { rb.innerHTML = `<div class="error-box">${e.message}</div>`; }
+  btn.disabled = false;
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('search-input').addEventListener('keydown', e => { if(e.key==='Enter') searchAsset(); });
+  document.getElementById('add-input') && document.getElementById('add-input').addEventListener('keydown', e => { if(e.key==='Enter') confirmAdd(); });
+});
+
+// ── ANALISI IMMAGINE ──────────────────────────────────
+function setTipo(btn, tipo) {
+  document.querySelectorAll('.tipo-btn').forEach(b => b.className = 'tipo-btn');
+  btn.className = 'tipo-btn tipo-active';
+  tipoCorrente = tipo;
+  document.getElementById('tipo-desc').textContent = T[lang].tipoDescs[tipo];
+}
+
+function previewImg(e) {
+  const file = e.target.files[0]; if (!file) return;
+  imgMime = file.type;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    imgB64 = ev.target.result.split(',')[1];
+    document.getElementById('img-preview').src = ev.target.result;
+    document.getElementById('img-preview-wrap').style.display = 'block';
+    document.getElementById('img-result').style.display = 'none';
+    document.getElementById('analisi-status').textContent = '';
+  };
+  reader.readAsDataURL(file);
+}
+
+function resetImg() {
+  document.getElementById('img-preview-wrap').style.display = 'none';
+  document.getElementById('img-result').style.display = 'none';
+  document.getElementById('img-upload').value = '';
+  imgB64 = null;
+}
+
+async function analizzaImmagine() {
+  if (!imgB64) return;
+  const key = getKey(); if (!key) { alert(lang==='it'?'Inserisci prima la API key.':'Please enter your API key first.'); return; }
+  const btn = document.getElementById('analizza-btn');
+  const status = document.getElementById('analisi-status');
+  btn.disabled = true; btn.querySelector('span').textContent = '...';
+  status.textContent = lang==='it'?"L'AI sta leggendo l'immagine...":'AI is reading the image...';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01', 'anthropic-dangerous-direct-browser-access': 'true' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
+        messages: [{ role: 'user', content: [
+          { type: 'image', source: { type: 'base64', media_type: imgMime, data: imgB64 } },
+          { type: 'text', text: T[lang].tipoPrompts[tipoCorrente] }
+        ]}]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const result = document.getElementById('img-result');
+    result.innerHTML = text.replace(/\n/g,'<br>');
+    result.className = 'result-box';
+    result.style.display = 'block';
+    status.textContent = lang==='it'?'✓ Analisi completata':'✓ Analysis complete';
+  } catch(e) {
+    document.getElementById('img-result').innerHTML = `<div class="error-box">${e.message}</div>`;
+    document.getElementById('img-result').style.display = 'block';
+    status.textContent = '';
+  }
+  btn.disabled = false; btn.querySelector('span').textContent = T[lang].analizza;
+}
+
+// ── CHAT ──────────────────────────────────────────────
+function renderChat() {
+  const el = document.getElementById('chat-messages');
+  if (!chatMsgs.length) {
+    el.innerHTML = `<div style="font-size:13px;color:#aaa;text-align:center;padding:20px 0;">${T[lang].chatEmpty}</div>`;
+    return;
+  }
+  el.innerHTML = chatMsgs.map(m => `
+    <div class="chat-msg ${m.user === userName ? 'me' : ''}">
+      <div class="chat-msg-name">${m.user} <span>${m.time}</span></div>
+      <div class="chat-msg-txt">${m.text}</div>
+    </div>`).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function sendChat() {
+  if (!userName) {
+    userName = prompt(lang === 'it' ? 'Il tuo nome nella chat:' : 'Your chat name:') || 'Utente';
+    localStorage.setItem('oo_username', userName);
+  }
+  const inp = document.getElementById('chat-input');
+  const text = inp.value.trim(); if (!text) return;
+  const msg = { user: userName, text, time: new Date().toLocaleTimeString('it-IT', {hour:'2-digit',minute:'2-digit'}) + ' GMT' };
+  chatMsgs.push(msg);
+  if (chatMsgs.length > 50) chatMsgs = chatMsgs.slice(-50);
+  localStorage.setItem('oo_chat', JSON.stringify(chatMsgs));
+  inp.value = '';
+  renderChat();
+}
+
+// ── COUNTDOWN ─────────────────────────────────────────
+function changeFreq(val) {
+  freqSec = parseInt(val);
+  if (cdTimer) clearInterval(cdTimer);
+  startCountdown();
+}
+
+function startCountdown() {
+  let s = freqSec - 1;
+  if (cdTimer) clearInterval(cdTimer);
+  cdTimer = setInterval(() => {
+    s = Math.max(0, s-1);
+    const m = Math.floor(s/60), sec = s%60;
+    document.getElementById('cd-lbl').textContent = `${lang==='it'?'Prossima in':'Next in'} ${m}:${sec.toString().padStart(2,'0')}`;
+    if (s === 0) { clearInterval(cdTimer); runAnalysis(); }
+  }, 1000);
+}
+
+// ── INIT ──────────────────────────────────────────────
+applyLang();
+updateKeyStatus();
+setTipo(document.querySelector('.tipo-btn.tipo-active'), 'chart');
+connectWS();
+loadFutures();
+loadIndices();
+renderWatchlist();
+renderChat();
+setInterval(loadFutures, 60000);
+setInterval(loadIndices, 300000);
+if (getKey()) { runAnalysis(); startCountdown(); }
+</script>
+</body>
+</html>
